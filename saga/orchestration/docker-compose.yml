@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    build:
+      context: ./orchestrator
+      additional_contexts:
+        root: ../..
+    container_name: orchestrator
+    ports:
+      - '3000:3000'
+    environment:
+      - PORT=3000
+    networks:
+      - saga-network
+
+  inventory:
+    build:
+      context: ./inventory
+      additional_contexts:
+        root: ../..
+    container_name: inventory
+    ports:
+      - '3001:3001'
+    environment:
+      - PORT=3001
+    networks:
+      - saga-network
+
+  orders:
+    build:
+      context: ./orders
+      additional_contexts:
+        root: ../..
+    container_name: orders
+    ports:
+      - '3002:3002'
+    environment:
+      - PORT=3002
+    networks:
+      - saga-network
+
+  notifier:
+    build:
+      context: ./notifier
+      additional_contexts:
+        root: ../..
+    container_name: notifier
+    ports:
+      - '3003:3003'
+    environment:
+      - PORT=3003
+    networks:
+      - saga-network
+
+networks:
+  saga-network:
