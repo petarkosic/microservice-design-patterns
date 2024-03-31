@@ -1,0 +1,29 @@
+{
+  "name": "microservice-design-patterns",
+  "version": "1.0.0",
+  "description": "Welcome to the Microservice Design Patterns Repository!",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/petarkosic/microservice-design-patterns.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/petarkosic/microservice-design-patterns/issues"
+  },
+  "homepage": "https://github.com/petarkosic/microservice-design-patterns#readme",
+  "workspaces": [
+    "saga/*"
+  ],
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.30",
+    "ts-node": "^10.9.2"
+  }
+}
