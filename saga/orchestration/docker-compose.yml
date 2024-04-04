@@ -46,6 +46,15 @@ services:
       - '3002:3002'
     environment:
       - PORT=3002
+      - RABBITMQ_PROTOCOL=amqp
+      - RABBITMQ_HOSTNAME=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=default
+      - RABBITMQ_PASSWORD=default
+      - RABBITMQ_VHOST=/
+    depends_on:
+      rabbitmq:
+        condition: 'service_started'
     networks:
       - saga-network
 
