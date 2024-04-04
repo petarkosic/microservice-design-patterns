@@ -11,6 +11,15 @@ services:
       - '3000:3000'
     environment:
       - PORT=3000
+      - RABBITMQ_PROTOCOL=amqp
+      - RABBITMQ_HOSTNAME=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=default
+      - RABBITMQ_PASSWORD=default
+      - RABBITMQ_VHOST=/
+    depends_on:
+      rabbitmq:
+        condition: 'service_started'
     networks:
       - saga-network
 
@@ -50,6 +59,19 @@ services:
       - '3003:3003'
     environment:
       - PORT=3003
+    networks:
+      - saga-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: saga-orchestration
+    environment:
+      - RABBITMQ_DEFAULT_USER=default
+      - RABBITMQ_DEFAULT_PASS=default
+    ports:
+      - '5672:5672'
+      - '15672:15672'
     networks:
       - saga-network
 
