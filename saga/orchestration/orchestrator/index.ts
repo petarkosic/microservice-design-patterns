@@ -23,31 +23,59 @@ async function sendMessage() {
 		const connection = await amqp.connect(connObject);
 		const channel = await connection.createChannel();
 
-		const queue = 'orders';
-		const correlationId = generateUuid();
+		const queueOrders = 'orders';
+		const queueInventory = 'inventory';
+		const correlationIdOrders = generateUuid();
 
-		await channel.assertQueue(queue, { durable: false });
+		await channel.assertQueue(queueOrders, { durable: false });
+		await channel.assertQueue(queueInventory, { durable: false });
 
 		// Create a reply queue
-		const { queue: replyQueue } = await channel.assertQueue('', {
+		const { queue: replyOrdersQueue } = await channel.assertQueue('', {
 			exclusive: true,
 		});
 
 		// Send a message with reply-to and correlationId properties
-		const message = 'Hello orders!';
-		channel.sendToQueue(queue, Buffer.from(message), {
-			correlationId: correlationId,
-			replyTo: replyQueue,
+		const messageOrders = 'Hello orders!';
+		channel.sendToQueue(queueOrders, Buffer.from(messageOrders), {
+			correlationId: correlationIdOrders,
+			replyTo: replyOrdersQueue,
 		});
 
-		console.log(`[x] Sent ${message}`);
+		console.log(`[x] Sent ${messageOrders}`);
 
 		channel.consume(
-			replyQueue,
+			replyOrdersQueue,
 			(msg) => {
-				if (msg?.properties.correlationId === correlationId) {
+				if (msg?.properties.correlationId === correlationIdOrders) {
 					console.log(
-						'Received response from Service A:',
+						'Received response from orders: ',
+						msg.content.toString()
+					);
+				}
+			},
+			{ noAck: true }
+		);
+
+		const correlationIdInventory = generateUuid();
+		const { queue: replyInventoryQueue } = await channel.assertQueue('', {
+			exclusive: true,
+		});
+
+		const messageInventory = 'Hello inventory!';
+		channel.sendToQueue(queueInventory, Buffer.from(messageInventory), {
+			correlationId: correlationIdInventory,
+			replyTo: replyInventoryQueue,
+		});
+
+		console.log(`[x] Sent ${messageInventory}`);
+
+		channel.consume(
+			replyInventoryQueue,
+			(msg) => {
+				if (msg?.properties.correlationId === correlationIdInventory) {
+					console.log(
+						'Received response from inventory: ',
 						msg.content.toString()
 					);
 				}
