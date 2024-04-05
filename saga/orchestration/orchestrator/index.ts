@@ -25,10 +25,12 @@ async function sendMessage() {
 
 		const queueOrders = 'orders';
 		const queueInventory = 'inventory';
+		const queueNotifier = 'notifier';
 		const correlationIdOrders = generateUuid();
 
 		await channel.assertQueue(queueOrders, { durable: false });
 		await channel.assertQueue(queueInventory, { durable: false });
+		await channel.assertQueue(queueNotifier, { durable: false });
 
 		// Create a reply queue
 		const { queue: replyOrdersQueue } = await channel.assertQueue('', {
@@ -76,6 +78,32 @@ async function sendMessage() {
 				if (msg?.properties.correlationId === correlationIdInventory) {
 					console.log(
 						'Received response from inventory: ',
+						msg.content.toString()
+					);
+				}
+			},
+			{ noAck: true }
+		);
+
+		const correlationIdNotifier = generateUuid();
+		const { queue: replyNotifierQueue } = await channel.assertQueue('', {
+			exclusive: true,
+		});
+
+		const messageNotifier = 'Hello notifier!';
+		channel.sendToQueue(queueNotifier, Buffer.from(messageNotifier), {
+			correlationId: correlationIdNotifier,
+			replyTo: replyNotifierQueue,
+		});
+
+		console.log(`[x] Sent ${messageNotifier}`);
+
+		channel.consume(
+			replyNotifierQueue,
+			(msg) => {
+				if (msg?.properties.correlationId === correlationIdNotifier) {
+					console.log(
+						'Received response from notifier: ',
 						msg.content.toString()
 					);
 				}
