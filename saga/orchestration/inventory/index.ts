@@ -21,21 +21,18 @@ async function receiveMessage() {
 
 		channel.consume(queue, async (msg) => {
 			if (msg) {
-				let messageContent = msg.content.toString();
+				let messageContent = JSON.parse(msg.content.toString());
 				console.log('[x] Received %s', messageContent);
 
 				// Do some processing here
-				messageContent = messageContent.toLowerCase();
+				// Check if item is in stock
+
+				const isInStock = Math.random() > 0.5 ? 'success' : 'failure';
 
 				// Send response back to reply-to queue
-				const responseMessage = `Processed: ${messageContent}`;
-				channel.sendToQueue(
-					msg.properties.replyTo,
-					Buffer.from(responseMessage),
-					{
-						correlationId: msg.properties.correlationId,
-					}
-				);
+				channel.sendToQueue(msg.properties.replyTo, Buffer.from(isInStock), {
+					correlationId: msg.properties.correlationId,
+				});
 
 				// Acknowledge the message
 				channel.ack(msg);

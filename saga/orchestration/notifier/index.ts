@@ -25,17 +25,13 @@ async function receiveMessage() {
 				console.log('[x] Received %s', messageContent);
 
 				// Do some processing here
-				messageContent = messageContent + '!!!!!!';
+				// Send notification, email or SMS
+				const notification = `New order ${messageContent} placed.`;
 
 				// Send response back to reply-to queue
-				const responseMessage = `Processed: ${messageContent}`;
-				channel.sendToQueue(
-					msg.properties.replyTo,
-					Buffer.from(responseMessage),
-					{
-						correlationId: msg.properties.correlationId,
-					}
-				);
+				channel.sendToQueue(msg.properties.replyTo, Buffer.from(notification), {
+					correlationId: msg.properties.correlationId,
+				});
 
 				// Acknowledge the message
 				channel.ack(msg);
