@@ -19,7 +19,6 @@
     "@types/amqplib": "^0.10.5",
     "@types/express": "^4.17.21",
     "@types/node": "^20.11.30",
-    "saga": "^4.0.0-alpha",
     "ts-node": "^10.9.2"
   }
 }

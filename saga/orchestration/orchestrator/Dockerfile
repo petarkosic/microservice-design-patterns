@@ -16,8 +16,13 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+RUN apk add --update bash
+
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
+COPY --from=root /saga/orchestration/wait-for-it.sh .
+
+RUN chmod +x ./wait-for-it.sh
 
 RUN npm ci --only=production
 
