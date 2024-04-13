@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: cqrs
+    environment:
+      - RABBITMQ_DEFAULT_USER=default
+      - RABBITMQ_DEFAULT_PASS=default
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - cqrs-network
+
+  command-service:
+    build:
+      context: ./command
+      additional_contexts:
+        cqrs-root: ../cqrs
+    container_name: command-service
+    ports:
+      - '3000:3000'
+    environment:
+      - PORT=3000
+      - RABBITMQ_PROTOCOL=amqp
+      - RABBITMQ_HOSTNAME=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=default
+      - RABBITMQ_PASSWORD=default
+      - RABBITMQ_VHOST=/
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cqrs
+      - POSTGRES_HOST=command-db
+      - POSTGRES_PORT=5432
+    depends_on:
+      rabbitmq:
+        condition: 'service_started'
+      command-db:
+        condition: 'service_healthy'
+    command:
+      [
+        './wait-for-it.sh',
+        'rabbitmq:5672',
+        '--',
+        './wait-for-it.sh',
+        'rabbitmq:15672',
+        '--',
+        'npm',
+        'start',
+      ]
+    networks:
+      - cqrs-network
+
+  command-db:
+    image: postgres
+    container_name: command-db
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cqrs
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d cqrs']
+      interval: 10s
+      retries: 5
+      timeout: 5s
+    networks:
+      - cqrs-network
+
+  query-service:
+    build:
+      context: ./query
+      additional_contexts:
+        cqrs-root: ../cqrs
+    container_name: query-service
+    ports:
+      - '3001:3001'
+    environment:
+      - PORT=3001
+      - RABBITMQ_PROTOCOL=amqp
+      - RABBITMQ_HOSTNAME=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=default
+      - RABBITMQ_PASSWORD=default
+      - RABBITMQ_VHOST=/
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cqrs
+      - POSTGRES_HOST=query-db
+      - POSTGRES_PORT=5432
+    depends_on:
+      rabbitmq:
+        condition: 'service_started'
+      query-db:
+        condition: 'service_healthy'
+    command:
+      [
+        './wait-for-it.sh',
+        'rabbitmq:5672',
+        '--',
+        './wait-for-it.sh',
+        'rabbitmq:15672',
+        '--',
+        'npm',
+        'start',
+      ]
+    networks:
+      - cqrs-network
+
+  query-db:
+    image: postgres
+    container_name: query-db
+    ports:
+      - '5433:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cqrs
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d cqrs']
+      interval: 10s
+      retries: 5
+      timeout: 5s
+    networks:
+      - cqrs-network
+
+networks:
+  cqrs-network:
