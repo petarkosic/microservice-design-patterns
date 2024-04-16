@@ -5,10 +5,19 @@ import * as amqp from 'amqplib';
 const app: Express = express();
 const PORT = process.env.PORT || 3001;
 
+const rabbitmqConnOject = {
+	protocol: process.env.RABBITMQ_PROTOCOL,
+	hostname: process.env.RABBITMQ_HOSTNAME,
+	port: Number(process.env.RABBITMQ_PORT),
+	username: process.env.RABBITMQ_USERNAME,
+	password: process.env.RABBITMQ_PASSWORD,
+	vhost: process.env.RABBITMQ_VHOST,
+};
+
 const pg = new Client({
 	user: process.env.POSTGRES_USER,
 	password: process.env.POSTGRES_PASSWORD,
-	database: process.env.POSTGRES_DATABASE,
+	database: process.env.POSTGRES_DB,
 	host: process.env.POSTGRES_HOST,
 	port: Number(process.env.POSTGRES_PORT),
 });
@@ -17,7 +26,7 @@ pg.connect();
 
 const connectToRabbitMQ = async () => {
 	try {
-		const connection = await amqp.connect('amqp://rabbitmq');
+		const connection = await amqp.connect(rabbitmqConnOject);
 		const channel = await connection.createChannel();
 		const exchange = 'user_events';
 
@@ -49,9 +58,15 @@ const connectToRabbitMQ = async () => {
 const processEvent = async (eventData: any) => {
 	try {
 		if (eventData.type === 'UserCreated') {
-			const query = 'INSERT INTO users (id, name) VALUES ($1, $2)';
-			const values = [eventData.payload.id, eventData.payload.name];
-			await pg.query(query, values);
+			const query =
+				'INSERT INTO users (first_name, last_name, email) VALUES ($1, $2, $3)';
+
+			await pg.query(query, [
+				eventData.payload.first_name,
+				eventData.payload.last_name,
+				eventData.payload.email,
+			]);
+
 			console.log('User inserted:', eventData.payload);
 		}
 	} catch (error) {
@@ -65,6 +80,7 @@ app.get('/users', async (req: Request, res: Response) => {
 	try {
 		const query = 'SELECT * FROM users';
 		const result = await pg.query(query);
+
 		res.json(result.rows);
 	} catch (error) {
 		console.error('Error fetching users:', error);

@@ -7,10 +7,19 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+const rabbitmqConnOject = {
+	protocol: process.env.RABBITMQ_PROTOCOL,
+	hostname: process.env.RABBITMQ_HOSTNAME,
+	port: Number(process.env.RABBITMQ_PORT),
+	username: process.env.RABBITMQ_USERNAME,
+	password: process.env.RABBITMQ_PASSWORD,
+	vhost: process.env.RABBITMQ_VHOST,
+};
+
 const pg = new Client({
 	user: process.env.POSTGRES_USER,
 	password: process.env.POSTGRES_PASSWORD,
-	database: process.env.POSTGRES_DATABASE,
+	database: process.env.POSTGRES_DB,
 	host: process.env.POSTGRES_HOST,
 	port: Number(process.env.POSTGRES_PORT),
 });
@@ -19,7 +28,7 @@ pg.connect();
 
 const connectToRabbitMQ = async () => {
 	try {
-		const connection = await amqp.connect('amqp://rabbitmq');
+		const connection = await amqp.connect(rabbitmqConnOject);
 		const channel = await connection.createChannel();
 		const exchange = 'user_events';
 
@@ -31,6 +40,7 @@ const connectToRabbitMQ = async () => {
 		await channel.bindQueue(queueName, exchange, '');
 
 		console.log('Connected to RabbitMQ');
+
 		return channel;
 	} catch (error) {
 		console.error('Error connecting to RabbitMQ:', error);
@@ -38,22 +48,31 @@ const connectToRabbitMQ = async () => {
 };
 
 app.post('/users', async (req: Request, res: Response) => {
-	const { name } = req.body;
+	const { first_name, last_name, email } = req.body;
 
 	try {
-		const user = await pg.query(
-			`INSERT INTO users(name) VALUES($1) RETURNING *`,
-			[name]
-		);
+		const query =
+			'INSERT INTO users(first_name, last_name, email) VALUES($1, $2, $3) RETURNING *';
 
-		const userData = { id: user.rows[0].id, name: user.rows[0].name };
+		const user = await pg.query(query, [first_name, last_name, email]);
+
+		const userData = {
+			type: 'UserCreated',
+			payload: {
+				first_name: user.rows[0].first_name,
+				last_name: user.rows[0].last_name,
+				email: user.rows[0].email,
+			},
+		};
 
 		const channel = await connectToRabbitMQ();
+
 		await channel?.publish(
 			'user_events',
 			'',
 			Buffer.from(JSON.stringify(userData))
 		);
+
 		console.log('User created:', userData);
 		res.status(201).json(userData);
 	} catch (error) {
