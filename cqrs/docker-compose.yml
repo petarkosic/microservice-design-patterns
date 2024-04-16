@@ -36,10 +36,8 @@ services:
       - POSTGRES_HOST=command-db
       - POSTGRES_PORT=5432
     depends_on:
-      rabbitmq:
-        condition: 'service_started'
-      command-db:
-        condition: 'service_healthy'
+      - rabbitmq
+      - command-db
     command:
       [
         './wait-for-it.sh',
@@ -47,6 +45,9 @@ services:
         '--',
         './wait-for-it.sh',
         'rabbitmq:15672',
+        '--',
+        './wait-for-it.sh',
+        'command-db:5432',
         '--',
         'npm',
         'start',
@@ -62,7 +63,12 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=command-db
+      - POSTGRES_PORT=5432
       - POSTGRES_DB=cqrs
+    volumes:
+      - ./command/postgres-data:/var/lib/postgresql/data
+      - ./command/db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d cqrs']
       interval: 10s
@@ -93,10 +99,8 @@ services:
       - POSTGRES_HOST=query-db
       - POSTGRES_PORT=5432
     depends_on:
-      rabbitmq:
-        condition: 'service_started'
-      query-db:
-        condition: 'service_healthy'
+      - rabbitmq
+      - query-db
     command:
       [
         './wait-for-it.sh',
@@ -104,6 +108,9 @@ services:
         '--',
         './wait-for-it.sh',
         'rabbitmq:15672',
+        '--',
+        './wait-for-it.sh',
+        'query-db:5432',
         '--',
         'npm',
         'start',
@@ -119,7 +126,12 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_HOST=query-db
+      - POSTGRES_PORT=5432
       - POSTGRES_DB=cqrs
+    volumes:
+      - ./query/postgres-data:/var/lib/postgresql/data
+      - ./query/db:/docker-entrypoint-initdb.d
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d cqrs']
       interval: 10s
