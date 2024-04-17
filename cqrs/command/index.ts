@@ -26,7 +26,7 @@ const pg = new Client({
 
 pg.connect();
 
-const connectToRabbitMQ = async () => {
+const connectToRabbitMQ = async (): Promise<amqp.Channel | undefined> => {
 	try {
 		const connection = await amqp.connect(rabbitmqConnOject);
 		const channel = await connection.createChannel();
@@ -50,7 +50,17 @@ const connectToRabbitMQ = async () => {
 app.post('/users', async (req: Request, res: Response) => {
 	const { first_name, last_name, email } = req.body;
 
+	let channel: amqp.Channel | undefined;
+
 	try {
+		const checkEmailQuery = 'SELECT * FROM users WHERE email = $1';
+
+		const result = await pg.query(checkEmailQuery, [email]);
+
+		if (result.rows.length > 0) {
+			return res.status(409).send('Email already exists');
+		}
+
 		const query =
 			'INSERT INTO users(first_name, last_name, email) VALUES($1, $2, $3) RETURNING *';
 
@@ -65,7 +75,7 @@ app.post('/users', async (req: Request, res: Response) => {
 			},
 		};
 
-		const channel = await connectToRabbitMQ();
+		channel = await connectToRabbitMQ();
 
 		await channel?.publish(
 			'user_events',
@@ -78,6 +88,106 @@ app.post('/users', async (req: Request, res: Response) => {
 	} catch (error) {
 		console.error('Error creating user:', error);
 		res.status(500).send('Internal Server Error');
+	} finally {
+		if (channel) {
+			await channel.close();
+		}
+	}
+});
+
+app.put('/users/:id', async (req: Request, res: Response) => {
+	const { id } = req.params;
+	const { first_name, last_name, email } = req.body;
+
+	let channel: amqp.Channel | undefined;
+
+	try {
+		const checkIdQuery = 'SELECT * FROM users WHERE id = $1';
+
+		const result = await pg.query(checkIdQuery, [id]);
+
+		if (result.rows.length === 0) {
+			return res.status(404).send('User not found');
+		}
+
+		const query =
+			'UPDATE users SET first_name = $1, last_name = $2, email = $3 WHERE id = $4 RETURNING *';
+
+		const user = await pg.query(query, [first_name, last_name, email, id]);
+
+		const userData = {
+			type: 'UserUpdated',
+			payload: {
+				id: user.rows[0].id,
+				first_name: user.rows[0].first_name,
+				last_name: user.rows[0].last_name,
+				email: user.rows[0].email,
+			},
+		};
+
+		channel = await connectToRabbitMQ();
+
+		await channel?.publish(
+			'user_events',
+			'',
+			Buffer.from(JSON.stringify(userData))
+		);
+
+		console.log('User updated:', userData);
+		res.status(200).json(userData);
+	} catch (error) {
+		console.error('Error updating user:', error);
+		res.status(500).send('Internal Server Error');
+	} finally {
+		if (channel) {
+			await channel.close();
+		}
+	}
+});
+
+app.delete('/users/:id', async (req: Request, res: Response) => {
+	const { id } = req.params;
+
+	let channel: amqp.Channel | undefined;
+
+	try {
+		const checkIdQuery = 'SELECT * FROM users WHERE id = $1';
+
+		const result = await pg.query(checkIdQuery, [id]);
+
+		if (result.rows.length === 0) {
+			return res.status(404).send('User not found');
+		}
+
+		const query = 'DELETE FROM users WHERE id = $1 RETURNING *';
+
+		const user = await pg.query(query, [id]);
+
+		const userData = {
+			type: 'UserDeleted',
+			payload: {
+				id: user.rows[0].id,
+				email: user.rows[0].email,
+			},
+		};
+
+		channel = await connectToRabbitMQ();
+
+		await channel?.publish(
+			'user_events',
+			'',
+			Buffer.from(JSON.stringify(userData))
+		);
+
+		console.log('User deleted:', userData);
+		res.status(200).json(userData);
+	} catch (error) {
+		console.error('Error deleting user:', error);
+		res.status(500).send('Internal Server Error');
+	} finally {
+		if (channel) {
+			await channel.close();
+		}
 	}
 });
 
