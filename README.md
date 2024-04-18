@@ -24,6 +24,8 @@ This repository contains:
 
 ### 1. [Saga Orchestration](./saga/orchestration/README.md)
 
+### 2. [CQRS](./cqrs/README.md)
+
 ## Getting Started
 
 To get started, explore the contents of this repository and delve into the specific design patterns you're interested in. Each pattern implementation comes with its own documentation and code examples to help you understand and apply it effectively.

@@ -58,6 +58,8 @@ To run the microservices and start the CQRS:
 
 ## Endpoints
 
+#### Command service
+
 1. **Create a User**:
    - Method: `POST`
    - Endpoint: `/users`
@@ -74,11 +76,14 @@ To run the microservices and start the CQRS:
    - Endpoint: `/users/:id`
    - Description: Deletes the user with the specified ID.
    - Parameters: User ID (`id`)
-4. **Get All Users**:
+
+#### Query service
+
+1. **Get All Users**:
    - Method: `GET`
    - Endpoint: `/users`
    - Description: Retrieves a list of all users.
-5. **Get a Specific User**:
+2. **Get a Specific User**:
    - Method: `GET`
    - Endpoint: `/users/:id`
    - Description: Retrieves the user with the specified ID.
