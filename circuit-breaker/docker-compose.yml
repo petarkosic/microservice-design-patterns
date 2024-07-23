@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  circuit-breaker-server:
+    build:
+      context: ./server
+      additional_contexts:
+        circuit-breaker-root: ../circuit-breaker
+    container_name: circuit-breaker-server
+    ports:
+      - '3000:3000'
+    networks:
+      - circuit-breaker-network
+
+  circuit-breaker-client:
+    build:
+      context: ./client
+      additional_contexts:
+        circuit-breaker-root: ../circuit-breaker
+    container_name: circuit-breaker-client
+    depends_on:
+      - circuit-breaker-server
+    networks:
+      - circuit-breaker-network
+
+networks:
+  circuit-breaker-network:
