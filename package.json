@@ -16,7 +16,8 @@
   "homepage": "https://github.com/petarkosic/microservice-design-patterns#readme",
   "workspaces": [
     "saga/*",
-    "cqrs"
+    "cqrs",
+    "circuit-breaker"
   ],
   "dependencies": {
     "dotenv": "^16.4.5",
