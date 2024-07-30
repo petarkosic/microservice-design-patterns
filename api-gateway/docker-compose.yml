@@ -22,6 +22,16 @@ services:
     networks:
       - api-gateway
 
+  composite-service:
+    build:
+      context: ./composite
+      additional_contexts:
+        api-gateway-root: ../api-gateway
+    ports:
+      - '3002:3002'
+    networks:
+      - api-gateway
+
   kong:
     image: kong:latest
     environment:

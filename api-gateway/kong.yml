@@ -15,6 +15,13 @@ services:
         paths:
           - /products
 
+  - name: composite-service
+    url: http://composite-service:3002
+    routes:
+      - name: user-products
+        paths:
+          - /user-products
+
 plugins:
   - name: rate-limiting
     config:
