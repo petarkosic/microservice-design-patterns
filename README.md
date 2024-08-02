@@ -28,6 +28,8 @@ This repository contains:
 
 ### 3. [Circuit Breaker](./circuit-breaker/README.md)
 
+### 4. [Api Gateway](./api-gateway/README.md)
+
 ## Getting Started
 
 To get started, explore the contents of this repository and delve into the specific design patterns you're interested in. Each pattern implementation comes with its own documentation and code examples to help you understand and apply it effectively.

@@ -21,6 +21,7 @@ services:
       - name: user-products
         paths:
           - /user-products
+        strip_path: false
 
 plugins:
   - name: rate-limiting
