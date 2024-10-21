@@ -18,7 +18,8 @@
     "saga/*",
     "cqrs",
     "circuit-breaker",
-    "api-gateway"
+    "api-gateway",
+    "event-driven-architecture"
   ],
   "dependencies": {
     "dotenv": "^16.4.5",
