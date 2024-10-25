@@ -30,6 +30,8 @@ This repository contains:
 
 ### 4. [Api Gateway](./api-gateway/README.md)
 
+### 5. [Event Driven Architecture](./event-driven-architecture/README.md)
+
 ## Getting Started
 
 To get started, explore the contents of this repository and delve into the specific design patterns you're interested in. Each pattern implementation comes with its own documentation and code examples to help you understand and apply it effectively.
